@@ -3,6 +3,9 @@ package com.ginkage.musicled;
 import android.content.Context;
 import android.graphics.*;
 import android.media.audiofx.Visualizer;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -291,6 +294,15 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
                     double note = Math.log(frequency * fcoef) / base; // note = 12 * Octave + Note
 					double spectre = note - 12.0 * Math.floor(note / 12.0); // spectre is within [0, 12)
 
+	                double ring = (12 - spectre) * 8 + 48; // (0 .. 96]
+	                if (ring > 96)
+		                ring -= 96; // [0 .. 96]
+
+	                int cring = (int) Math.floor(ring + 4.5);
+	                if (ring > 100)
+		                ring -= 100; // [4 .. 100]
+	                setColor();
+
 					double R = clamp(spectre - 6);
 					double G = clamp(spectre - 10);
 					double B = clamp(spectre - 2);
@@ -457,6 +469,8 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 	/** The thread that actually draws the animation */
 	private DiscoThread thread;
 
+	private TCPClient mTcpClient = null;
+
 	public DiscoView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 
@@ -467,6 +481,68 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 		mContext = context;
 
 		setFocusable(true); // make sure we get key events
+	}
+
+	public class connectTask extends AsyncTask<String,String,TCPClient> {
+		@Override
+		protected TCPClient doInBackground(String... message) {
+			//we create a TCPClient object and
+			mTcpClient = new TCPClient(new TCPClient.OnMessageReceived() {
+				@Override
+				//here the messageReceived method is implemented
+				public void messageReceived(String message) {
+					//this method calls the onProgressUpdate
+					publishProgress(message);
+				}
+			});
+			mTcpClient.run();
+
+			return null;
+		}
+
+		@Override
+		protected void onProgressUpdate(String... values) {
+			super.onProgressUpdate(values);
+		}
+	}
+
+	private void openSocket() {
+		if (mTcpClient == null || !mTcpClient.isConnected())
+			new connectTask().execute("");
+	}
+
+	private void closeSocket() {
+		if (mTcpClient != null) {
+			mTcpClient.stopClient();
+			mTcpClient = null;
+		}
+	}
+
+	private void sendPacket(int[] msg) {
+		if (mTcpClient != null && mTcpClient.isConnected())
+			mTcpClient.sendMessage(msg);
+	}
+
+	private void sendMessage(int[] msg) {
+		if (msg.length == 1)
+			sendPacket(msg);
+		else if (msg.length == 4) {
+			int[] newMsg = new int[] { 0x55, 0x34, 0x33, 0x39, 0x02, 0x00, 0, 0, 0, 0, 0xAA, 0xAA };
+			newMsg[6] = msg[0];
+			newMsg[7] = msg[1];
+			newMsg[8] = msg[2];
+			newMsg[9] = msg[3];
+			sendPacket(newMsg);
+		}
+	}
+
+	private void setColor(int color)
+	{
+		color -= 4;
+		if (color >= 1 && color <= 96) {
+			int[] msg = new int[] { 0x01, 0x01, color, color + 4 };
+			sendMessage(msg);
+		}
 	}
 
 	/**
@@ -502,6 +578,7 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 		thread = new DiscoThread(holder, mContext, new Handler() {
 			@Override
 			public void handleMessage(Message m) {
+				//noinspection ResourceType
 				mStatusText.setVisibility(m.getData().getInt("viz"));
 				mStatusText.setText(m.getData().getString("text"));
 			}
@@ -510,6 +587,7 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 		thread.setRunning(true);
 		thread.start();
 		thread.setMessage("Dummy Message");
+		openSocket();
 	}
 
 	/*
@@ -531,6 +609,7 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 		}
 
 		thread = null;
+		closeSocket();
 	}
 
     public void toggleDisplay()
