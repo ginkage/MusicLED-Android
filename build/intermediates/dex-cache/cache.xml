@@ -2,6 +2,12 @@
 <pre-dex-items>
 
     <item
+        dex="/Users/ginkage/Projects/studio/MusicLED/musicled/build/intermediates/pre-dexed/debug/classes-1c66196345fa7541c59e56959f7c3026931f858d.jar"
+        jar="/Users/ginkage/Projects/studio/MusicLED/musicled/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.0/classes.jar"
+        jumboMode="false"
+        revision="19.1.0"
+        sha1="686344a780033e4ba22b926cd225f8d4941247e6"/>
+    <item
         dex="/Users/ginkage/Projects/studio/MusicLED/musicled/build/intermediates/pre-dexed/debug/classes-c5e1ce96ea58f0af421c31166b2e32c760460158.jar"
         jar="/Users/ginkage/Projects/studio/MusicLED/musicled/build/intermediates/exploded-aar/com.android.support/appcompat-v7/21.0.0/classes.jar"
         jumboMode="false"
@@ -19,11 +25,5 @@
         jumboMode="false"
         revision="19.1.0"
         sha1="1a578b9607b36266c63d43a4fa0ab5664dbe911e"/>
-    <item
-        dex="/Users/ginkage/Projects/studio/MusicLED/musicled/build/intermediates/pre-dexed/debug/classes-1c66196345fa7541c59e56959f7c3026931f858d.jar"
-        jar="/Users/ginkage/Projects/studio/MusicLED/musicled/build/intermediates/exploded-aar/com.android.support/support-v4/21.0.0/classes.jar"
-        jumboMode="false"
-        revision="19.1.0"
-        sha1="686344a780033e4ba22b926cd225f8d4941247e6"/>
 
 </pre-dex-items>

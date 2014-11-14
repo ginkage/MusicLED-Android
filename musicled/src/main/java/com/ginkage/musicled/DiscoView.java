@@ -3,23 +3,15 @@ package com.ginkage.musicled;
 import android.content.Context;
 import android.graphics.*;
 import android.media.audiofx.Visualizer;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemClock;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.TextView;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.ShortBuffer;
 
 /**
  * View that draws, takes keystrokes, etc. for a simple DiscoLander game.
@@ -30,7 +22,7 @@ import java.nio.ShortBuffer;
  * ship, and does an invalidate() to prompt another draw() as soon as possible
  * by the system.
  */
-class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
+public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 	class DiscoThread extends Thread {
 		/*
 		 * Member (state) fields
