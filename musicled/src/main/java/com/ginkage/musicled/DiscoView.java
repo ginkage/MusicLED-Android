@@ -294,14 +294,11 @@ class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
                     double note = Math.log(frequency * fcoef) / base; // note = 12 * Octave + Note
 					double spectre = note - 12.0 * Math.floor(note / 12.0); // spectre is within [0, 12)
 
-	                double ring = (12 - spectre) * 8 + 48; // (0 .. 96]
-	                if (ring > 96)
-		                ring -= 96; // [0 .. 96]
-
-	                int cring = (int) Math.floor(ring + 4.5);
-	                if (ring > 100)
-		                ring -= 100; // [4 .. 100]
-	                setColor();
+	                int ring = (96 - (int) Math.floor(spectre * 8)); // [1 .. 96]
+	                int cring = ring + 48;
+	                if (cring > 100)
+		                cring -= 100; // [1 .. 100]
+	                setColor(cring);
 
 					double R = clamp(spectre - 6);
 					double G = clamp(spectre - 10);
