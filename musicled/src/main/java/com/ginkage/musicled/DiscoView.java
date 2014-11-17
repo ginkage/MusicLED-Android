@@ -72,13 +72,15 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 
 		private boolean hifi = false;
 
-		private final int M = 14;
+		private final int M = 13;
 		private final int N = (1 << M);
+		private final int mCaptureUsed = N;
 		private FFT fftCalc = new FFT(M);
 		private double[] re = new double[N];
 		private double[] im = new double[N];
 
         private int drawMode = 0;
+		private int prevColor = 0;
 
 		public DiscoThread(SurfaceHolder surfaceHolder, Context context, Handler handler)
 		{
@@ -212,9 +214,9 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 
 		private void doDrawHiFiFFT(Canvas canvas)
 		{
-			int k;
-			for (k = 0; k < mCaptureSize; k++) {
-				re[k] = (left[k] + right[k]) * 0.5;
+			int k, fbase = mCaptureSize - mCaptureUsed;
+			for (k = 0; k < mCaptureUsed; k++) {
+				re[k] = (left[fbase + k] + right[fbase + k]) * 0.5;
 				im[k] = 0;
 			}
 
@@ -224,7 +226,7 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 			    canvas.drawRGB(0, 0, 0);
 			Paint p = new Paint();
 
-			int maxFreq = mCaptureSize;
+			int maxFreq = mCaptureUsed;
 			double base = Math.log(Math.pow(2, 1.0 / 12.0));
 
 			double fcoef = Math.pow(2, 57.0 / 12.0) / 440.0; // Frequency 440 is a note number 57 = 12 * 4 + 9
@@ -243,14 +245,16 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 			
 			double maxAmp = 0;
 			int maxR = 0, maxG = 0, maxB = 0;
+			int cRing = 0;
+			double peakN = 0, maxN = 0;
 
 			for (k = 1; k < maxFreq >> 1; k++) {
 				double amp = Math.hypot(re[k], im[k]) / 256.0;
+				double frequency = (k * (double) mSamplingRate) / maxFreq;
+				double note = Math.log(frequency * fcoef) / base; // note = 12 * Octave + Note
+				maxN = note;
 
-                if (drawMode == 1) {
-                    double frequency = (k * (double) mSamplingRate) / maxFreq;
-                    double note = Math.log(frequency * fcoef) / base; // note = 12 * Octave + Note
-
+				if (drawMode == 1) {
                     int x = (int) Math.round(note * kx);
                     int y = (int) Math.round(amp * ky);
 
@@ -282,15 +286,12 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
                 }
 				else if (amp > maxAmp) {
 					maxAmp = amp;
-                    double frequency = (k * (double) mSamplingRate) / maxFreq;
-                    double note = Math.log(frequency * fcoef) / base; // note = 12 * Octave + Note
 					double spectre = note - 12.0 * Math.floor(note / 12.0); // spectre is within [0, 12)
 
 	                int ring = (96 - (int) Math.floor(spectre * 8)); // [1 .. 96]
-	                int cring = ring + 48;
-	                if (cring > 100)
-		                cring -= 100; // [1 .. 100]
-	                setColor(cring);
+	                cRing = ring + 48;
+	                if (cRing > 100)
+		                cRing -= 100; // [1 .. 100]
 
 					double R = clamp(spectre - 6);
 					double G = clamp(spectre - 10);
@@ -304,10 +305,14 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 					maxR = (int) Math.round(255.0 * (R - mn) / mm);
 					maxG = (int) Math.round(255.0 * (G - mn) / mm);
 					maxB = (int) Math.round(255.0 * (B - mn) / mm);
+	                peakN = note;
 				}
 			}
             if (drawMode != 1)
 			    canvas.drawRGB(maxR, maxG, maxB);
+			if (cRing != prevColor)
+				setColor(cRing);
+			prevColor = cRing;
 		}
 
 		private void doDrawHiFiWave(Canvas canvas)
@@ -512,7 +517,7 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 			mTcpClient.sendMessage(msg);
 	}
 
-	private void sendMessage(int[] msg) {
+	private void sendLEDMessage(int[] msg) {
 		if (msg.length == 1)
 			sendPacket(msg);
 		else if (msg.length == 4) {
@@ -530,7 +535,7 @@ public class DiscoView extends SurfaceView implements SurfaceHolder.Callback {
 		color -= 4;
 		if (color >= 1 && color <= 96) {
 			int[] msg = new int[] { 0x01, 0x01, color, color + 4 };
-			sendMessage(msg);
+			sendLEDMessage(msg);
 		}
 	}
 
